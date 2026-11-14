@@ -268,7 +268,7 @@ function bindPw(after){
 
 /* ================= 發音 ================= */
 let voice=null;
-const APP_VERSION="v2（11/14 電腦不再用英文腔念西文）";
+const APP_VERSION="v3（11/14 語速放慢、可調整）";
 const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 let voiceMode = (()=>{ try{ return localStorage.getItem("vocab_es_voice_mode")||"auto"; }catch(e){ return "auto"; } })();   // auto | plain | pick
 function pickVoice(){ if(!("speechSynthesis" in window)) return;
@@ -277,6 +277,10 @@ function pickVoice(){ if(!("speechSynthesis" in window)) return;
 if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
 /* Claude 語音（電腦版 App / Chrome 內可用）作為備援 */
 let tts=null, ttsBlocked=false, browserWorks=null;
+/* 語速：iPhone 的西文聲音偏快，預設放慢；使用者可在「發音測試」調整 */
+const SPEEDS={slower:0.75, normal:1, faster:1.2};
+let speedPref=(()=>{ try{ return localStorage.getItem("vocab_es_speed")||"normal"; }catch(e){ return "normal"; } })();
+function rateFor(slow){ const base = IS_IOS ? (slow?0.38:0.72) : (slow?0.55:0.85); return Math.max(0.1, base*(SPEEDS[speedPref]||1)); }
 let ttsLangs=null;   // Claude 語音支援的語言；不支援西班牙文時不用它（否則會用英文腔念）
 (async()=>{ try{ if(window.claude && claude.use){ tts = await claude.use("tts");
   if(tts && tts.languages){ ttsLangs = await tts.languages().catch(()=>null); } } }catch(e){ tts=null; } })();
@@ -288,7 +292,7 @@ function noSpanishVoice(auto){ if(auto && warnedNoEs) return; warnedNoEs=true;
 function hasBrowserVoice(){ try{ return ("speechSynthesis" in window) && speechSynthesis.getVoices().some(v=>/^es[-_]/i.test(v.lang)); }catch(e){ return false; } }
 function speakTTS(text, slow, quiet){
   if(!tts || ttsBlocked){ if(!quiet) toast("這個裝置沒有可用的西班牙文發音"); return; }
-  tts.speak(text, {language:"es-ES", rate: slow?0.7:1}).catch(e=>{
+  tts.speak(text, {language:"es-ES", rate: Math.max(0.7, Math.min(1.5, (slow?0.7:0.9)*(SPEEDS[speedPref]||1)))}).catch(e=>{
     const c=e&&e.code;
     if(c==="not_granted"||c==="unavailable"){ ttsBlocked=true; if(!quiet) toast("朗讀功能已關閉，可在頁面的權限選單重新開啟"); }
     else if(c==="rate_limited"){ if(!quiet) toast("發音次數太頻繁，請稍等一下再按"); }
@@ -330,7 +334,7 @@ function browserSpeak(text, slow){
   const ss=window.speechSynthesis;
   if(ss.speaking||ss.pending) ss.cancel();          // iPhone：一律先 cancel 再 speak 有時會沒聲音，只在需要時才取消
   if(!voice) pickVoice();
-  const u=new SpeechSynthesisUtterance(text); u.lang="es-ES"; u.rate=slow?0.6:0.95; u.volume=1;
+  const u=new SpeechSynthesisUtterance(text); u.lang="es-ES"; u.rate=rateFor(slow); u.volume=1;
   // iPhone 指定聲音時，若該聲音沒下載會完全沒聲音，所以 iPhone 預設只指定語言、讓系統自己選聲音
   const useVoice = voiceMode==="pick" || (voiceMode==="auto" && !IS_IOS);
   if(useVoice && voice) u.voice=voice;
@@ -677,6 +681,9 @@ function renderAdd(){
     <div id="diag" class="muted" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap"></div>
     <label>發音方式</label>
     <div class="seg" id="vmSeg"><button data-v="auto">自動</button><button data-v="plain">系統預設聲音</button><button data-v="pick">指定西文聲音</button></div>
+    <label>語速（🔊 正常和 🐢 慢速一起調整）</label>
+    <div class="seg" id="spSeg"><button data-s="slower">慢一點</button><button data-s="normal">標準</button><button data-s="faster">快一點</button></div>
+    <div class="btns"><button class="btn ghost" id="vSlow">🐢 試聽慢速</button></div>
     <div class="btns"><button class="btn ghost" id="vTest">🔊 測試發音：Hola, mucho gusto.</button></div>
     <div class="btns"><button class="btn ghost" id="smBtn"></button></div>
     <p class="muted" style="margin:6px 0 0">開啟後，iPhone 靜音時也會發音；但用單字本時，背景音樂（例如 Spotify）可能會被暫停。</p>
@@ -691,11 +698,15 @@ function renderAdd(){
   const $=id=>document.getElementById(id);
   const showDiag=()=>{ let v=[]; try{ v=speechSynthesis.getVoices(); }catch(e){}
     const en=v.filter(x=>/^es[-_]/i.test(x.lang));
-    $("diag").textContent=`版本：${APP_VERSION}\n裝置：${IS_IOS?"iPhone/iPad":"其他"}\n支援語音：${"speechSynthesis" in window?"是":"否"}\n聲音數量：${v.length}（西班牙文 ${en.length}）\n指定聲音：${voice?voice.name+" "+voice.lang:"無"}\nClaude 語音：${tts?(ttsSpanish()?"有（可念西文）":"有，但不支援西文，不使用"):"無"}${ttsLangs?"（"+ttsLangs.join(",")+"）":""}\n靜音模式發音：${silentModeOn?"開":"關"}（${navigator.audioSession?"支援音訊類型設定":"不支援音訊類型設定"}，無聲音訊${audioUnlocked?"播放中":"未播放"}）`;
+    $("diag").textContent=`版本：${APP_VERSION}\n裝置：${IS_IOS?"iPhone/iPad":"其他"}\n支援語音：${"speechSynthesis" in window?"是":"否"}\n聲音數量：${v.length}（西班牙文 ${en.length}）\n指定聲音：${voice?voice.name+" "+voice.lang:"無"}\n語速：正常 ${rateFor(false).toFixed(2)}／慢速 ${rateFor(true).toFixed(2)}\nClaude 語音：${tts?(ttsSpanish()?"有（可念西文）":"有，但不支援西文，不使用"):"無"}${ttsLangs?"（"+ttsLangs.join(",")+"）":""}\n靜音模式發音：${silentModeOn?"開":"關"}（${navigator.audioSession?"支援音訊類型設定":"不支援音訊類型設定"}，無聲音訊${audioUnlocked?"播放中":"未播放"}）`;
     $("smBtn").textContent = silentModeOn ? "🔔 靜音模式也發音：開（點一下關閉）" : "🔕 靜音模式也發音：關（點一下開啟）";
     document.querySelectorAll("#vmSeg button").forEach(b=>b.classList.toggle("on",b.dataset.v===voiceMode)); };
   showDiag(); try{ speechSynthesis.onvoiceschanged=()=>{ pickVoice(); showDiag(); }; }catch(e){}
   document.querySelectorAll("#vmSeg button").forEach(b=>b.onclick=()=>{ voiceMode=b.dataset.v; try{ localStorage.setItem("vocab_es_voice_mode",voiceMode); }catch(e){} showDiag(); speak("Hola, mucho gusto."); });
+  document.querySelectorAll("#spSeg button").forEach(b=>{ b.classList.toggle("on",b.dataset.s===speedPref);
+    b.onclick=()=>{ speedPref=b.dataset.s; try{ localStorage.setItem("vocab_es_speed",speedPref); }catch(e){}
+      document.querySelectorAll("#spSeg button").forEach(x=>x.classList.toggle("on",x.dataset.s===speedPref)); speak("Hola, mucho gusto."); }; });
+  $("vSlow").onclick=()=>speak("Hola, mucho gusto.", true);
   $("vTest").onclick=()=>{ speak("Hola, mucho gusto."); setTimeout(showDiag,300); };
   $("smBtn").onclick=()=>{ silentModeOn=!silentModeOn; try{ localStorage.setItem("vocab_es_silent_play", silentModeOn?"on":"off"); }catch(e){} if(silentModeOn) unlockAudio(); else stopSilent(); showDiag(); };
   $("try").onclick=()=>{ const w=$("w").value.trim(); if(w) speak(w); };
