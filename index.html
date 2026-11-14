@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的西班牙文單字本</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="西文單字本">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#b5452f">
+<style>
+  :root{
+    --bg:#f6f4ef; --card:#fff; --ink:#1f2a2e; --muted:#6b7478; --line:#e4e0d8;
+    --accent:#b5452f; --accent-soft:#f8e7e1; --warn:#b4462f; --warn-soft:#f8e6e1; --ok:#2f7d4f; --ok-soft:#e2f2e7; --gold:#b9831f; --gold-soft:#f7edd6;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#141817; --card:#1e2423; --ink:#e9ecea; --muted:#9aa4a1; --line:#2d3533;
+      --accent:#ef8a70; --accent-soft:#3a2520; --warn:#e8836c; --warn-soft:#3a2420; --ok:#6fcf97; --ok-soft:#1d3326; --gold:#e0b25a; --gold-soft:#3a3020; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.5;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+  header{padding:16px 16px 4px;max-width:640px;margin:0 auto;display:flex;align-items:baseline;gap:8px}
+  h1{font-size:20px;margin:0}
+  .sync{margin-left:auto;font-size:12px;color:var(--muted)}
+  main{max-width:640px;margin:0 auto;padding:8px 16px 24px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+  .row{display:flex;align-items:center;gap:10px}
+  .grow{flex:1;min-width:0}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+  .stat b{display:block;font-size:22px;color:var(--accent)}
+  .stat small{color:var(--muted);font-size:12px}
+  .bar{height:8px;background:var(--line);border-radius:5px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+  .word{font-size:22px;font-weight:700;letter-spacing:.2px}
+  .bigword{font-size:34px;font-weight:800;text-align:center;letter-spacing:.5px;margin-top:6px}
+  .pos{color:var(--muted);font-size:13px;font-weight:400}
+  .zh{font-size:16px}
+  .ex{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:16px}
+  .zh2{color:var(--muted);font-size:14px}
+  .icon{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:6px 10px;font-size:14px;cursor:pointer;white-space:nowrap}
+  .icon:active,.btn:active{transform:scale(.97)}
+  .btn{border:none;background:var(--accent);color:#fff;border-radius:12px;padding:13px 16px;font-size:16px;cursor:pointer;width:100%;font-family:inherit}
+  .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .btn.warn{background:var(--warn)}
+  .btn:disabled{opacity:.45}
+  .btns{display:flex;gap:8px;margin-top:10px}
+  input,textarea,select{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font-size:16px;font-family:inherit}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  .q-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:6px}
+  .q-zh{font-size:19px;font-weight:600}
+  .q-sent{font-size:17px;margin:12px 0 4px;line-height:1.75}
+  .blank{display:inline-block;min-width:64px;border-bottom:2px solid var(--gold);text-align:center;color:var(--gold);font-weight:700;letter-spacing:2px}
+  .answer{font-size:22px;letter-spacing:1px;text-align:center;font-family:ui-monospace,Menlo,monospace}
+  .fb{margin-top:10px;padding:10px 12px;border-radius:10px;font-size:15px}
+  .fb.ok{background:var(--ok-soft);color:var(--ok)}
+  .fb.no{background:var(--warn-soft);color:var(--warn)}
+  .diff{font-family:ui-monospace,Menlo,monospace;font-size:20px;letter-spacing:1px}
+  .diff b{color:var(--warn);text-decoration:underline}
+  .big{font-size:40px;font-weight:800;text-align:center;color:var(--accent)}
+  .center{text-align:center}
+  .muted{color:var(--muted);font-size:13px}
+  .empty{text-align:center;color:var(--muted);padding:30px 10px}
+  .star{color:var(--gold)}
+  .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);margin-left:6px;vertical-align:middle}
+  .tag.new{background:var(--line);color:var(--muted)}
+  .tag.due{background:var(--gold-soft);color:var(--gold)}
+  .list .item{display:flex;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+  .list .item:last-child{border-bottom:none}
+  .list .w{font-weight:700}
+  .list .m{color:var(--muted);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .detail{padding:4px 0 10px;border-bottom:1px solid var(--line)}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:70px;padding:9px 6px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit}
+  .seg button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+  .note{background:var(--gold-soft);color:var(--ink);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:10px}
+  #toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#1f2a2e;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;z-index:9;max-width:90%;text-align:center;display:none}
+  h2{font-size:16px;margin:0 0 6px}
+  .acc{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.acc button{flex:1;min-width:40px;padding:8px 0;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;font-size:18px;cursor:pointer;font-family:inherit}
+  .rule{padding:10px 0;border-top:1px solid var(--line)}.rule:first-of-type{border-top:none}.rule b.k{color:var(--accent);font-size:18px}
+</style>
+</head>
+<body>
+<header><h1 id="title" style="cursor:pointer">🇪🇸 我的西班牙文單字本</h1><span class="sync" id="sync">本機模式</span></header>
+<main id="app"><div class="empty">載入單字中…</div></main>
+<div id="toast"></div>
+<script src="words.js"></script>
+<script>
+/* ================= 資料 ================= */
+const GROUPS = [
+  {id:"talk",    icon:"👋", name:"會話與基本表達", desc:"打招呼、自我介紹、疑問詞、數字、日期與顏色"},
+  {id:"life",    icon:"✈️", name:"生活與旅遊",     desc:"點餐、交通、問路、購物、天氣與家裡"},
+  {id:"core",    icon:"📘", name:"基礎核心",       desc:"常用動詞、家人、身體、形容詞與小字"}
+];
+const GROUP_MAP = {talk:"talk", life:"life", core:"core"};
+const DAY = 6;    // 每天 6 個新字
+const PRESETS = [
+  {name:"固定", r:[2,2,2]}   // 每條路線每天各 2 個
+];
+const TOPICS = (window.VOCAB||[]).map(([name,group0,ws])=>({name, group:GROUP_MAP[group0]||group0, words:ws.map(a=>({w:a[0],pos:a[1],zh:a[2],ex:a[3],exZh:a[4],sp:a[5],topic:name}))}));
+const ALL = []; const BY = new Map();
+TOPICS.forEach(t=>t.words.forEach(x=>{ const k=x.w.toLowerCase(); if(!BY.has(k)){ ALL.push(x); BY.set(k, x); } }));
+function groupWords(gid){ const seen=new Set(), out=[]; TOPICS.filter(t=>t.group===gid).forEach(t=>t.words.forEach(x=>{const k=x.w.toLowerCase(); if(!seen.has(k)){seen.add(k); out.push(x);}})); return out; }
+const GW = Object.fromEntries(GROUPS.map(g=>[g.id, groupWords(g.id)]));
+function topicOptions(sel){
+  return GROUPS.map(g=>`<optgroup label="${g.icon} ${g.name}"><option value="g:${g.id}" ${sel==="g:"+g.id?"selected":""}>${g.icon} 整條路線：${g.name}（${GW[g.id].length}）</option>${TOPICS.filter(t=>t.group===g.id).map(t=>`<option value="${esc(t.name)}" ${t.name===sel?"selected":""}>${esc(t.name)}（${t.words.length}）</option>`).join("")}</optgroup>`).join("");
+}
+const INTERVALS = [0,1,2,4,7,15,30,60,120];   // box → 下次複習的天數
+const MASTER_BOX = 6;
+
+function today(){ const d=new Date(); return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000); }
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+/* ================= 儲存（雲端 + 本機） ================= */
+const LS = "vocab_es_v1";
+let S = { prog:{}, stars:{}, custom:[], settings:{goal:20, topic:"all"}, log:{}, streak:{last:-1,n:0} };
+function lsLoad(){ try{ const v=localStorage.getItem(LS); if(v) Object.assign(S, JSON.parse(v)); }catch(e){}
+}
+function lsSave(){ try{ localStorage.setItem(LS, JSON.stringify(S)); }catch(e){} }
+lsLoad();
+S.custom.forEach(c=>{ c.custom=true; c.topic="我的單字"; if(!BY.has(c.w.toLowerCase())) BY.set(c.w.toLowerCase(), c); });
+
+let cloud = null, saveTimer = null, saving = false, dirty = false;
+function setSync(t){ document.getElementById("sync").textContent=t; }
+function save(){
+  lsSave(); dirty = true;
+  if(!cloud) return;
+  clearTimeout(saveTimer); saveTimer = setTimeout(flush, 1500);
+}
+async function flush(){
+  if(!cloud || saving || !dirty) return;
+  saving = true; dirty = false; setSync("同步中…");
+  try{ await cloud.set(JSON.parse(JSON.stringify({v:1, updated:Date.now(), ...S}))); setSync("☁️ 已同步"); }
+  catch(e){ if(e && e.code==="invalid_argument"){ cloud=null; setSync("本機模式"); } else { dirty=true; setSync("同步失敗，稍後重試"); setTimeout(flush, 8000); } }
+  saving = false;
+  if(dirty) flush();
+}
+(async ()=>{
+  try{
+    if(!window.claude || !claude.use) return;
+    const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+    if(!db || !user) return;
+    const id = await user.id(); if(!id) return;
+    const ref = db.doc("data/users/"+id+"/vocab_es");
+    setSync("連線中…");
+    const snap = await ref.get();
+    if(snap.exists){
+      const d = JSON.parse(JSON.stringify(snap.data()||{}));  // 雲端資料是唯讀的，要先複製一份才能修改
+      const localN = Object.keys(S.prog).length, cloudN = Object.keys(d.prog||{}).length;
+      if(cloudN >= localN || (d.updated||0) > 0 && localN===0){
+        S = { prog:d.prog||{}, stars:d.stars||{}, custom:d.custom||[], settings:Object.assign({goal:20,topic:"all"}, d.settings||{}), log:d.log||{}, streak:d.streak||{last:-1,n:0}, pending:d.pending||[] };
+        S.custom.forEach(c=>{ c.custom=true; c.topic="我的單字"; if(!BY.has(c.w.toLowerCase())) BY.set(c.w.toLowerCase(), c); });
+        lsSave();
+      }
+    }
+    cloud = ref; setSync("☁️ 已同步");
+    if(!snap.exists || Object.keys(S.prog).length > Object.keys((snap.data()||{}).prog||{}).length){ dirty=true; flush(); }
+    if(state.tab==="home" && !state.quiz && !state.learn) render();
+  }catch(e){ setSync("本機模式"); }
+})();
+
+/* ================= 學習狀態 ================= */
+function P(w){ return S.prog[w.toLowerCase()]; }          // [box, due, wrong]
+function isDue(w){ const p=P(w); return p && p[1] <= today(); }
+function learnedCount(){ return Object.keys(S.prog).length; }
+function masteredCount(){ return Object.values(S.prog).filter(p=>p[0]>=MASTER_BOX).length; }
+function dueList(){ const t=today(); return Object.keys(S.prog).filter(k=>S.prog[k][1]<=t).map(k=>BY.get(k)).filter(Boolean); }
+function bumpLog(field,n=1){ const t=today(); S.log[t]=S.log[t]||{n:0,q:0,c:0}; S.log[t][field]+=n;
+  if(S.streak.last!==t){ S.streak.n = (S.streak.last===t-1)? S.streak.n+1 : 1; S.streak.last=t; }
+  const keys=Object.keys(S.log).map(Number).sort((a,b)=>a-b); while(keys.length>120) delete S.log[keys.shift()]; }
+function learnedDay(k){ const p=S.prog[k]; if(!p) return null; return p[3]!=null ? p[3] : -1; }   // 只有用字卡學的字才有學習日
+function recentLearned(days){ const t=today(); return Object.keys(S.prog).filter(k=>learnedDay(k)>t-days).map(k=>BY.get(k)).filter(Boolean); }
+function todayLog(){ return S.log[today()]||{n:0,q:0,c:0}; }
+function markLearned(x, known){
+  const k=x.w.toLowerCase(); if(S.prog[k]) return;
+  const box = known?2:1; S.prog[k]=[box, today()+INTERVALS[box], 0, today()]; bumpLog("n"); save();
+}
+function grade(x, ok){
+  const k=x.w.toLowerCase();
+  if(!S.prog[k] && !x.custom){ bumpLog("q"); if(ok) bumpLog("c",1); save(); return; }   // 還沒學過的字：只算練習，不加入學習紀錄
+  const p=S.prog[k] || [0,today(),0,-1];   // 自訂單字第一次測驗時才建立紀錄，不算「今天學的字」
+  if(ok){ p[0]=Math.min(p[0]+1, INTERVALS.length-1); p[1]=today()+INTERVALS[p[0]]; }
+  else { p[0]=1; p[1]=today(); p[2]=(p[2]||0)+1; }
+  S.prog[k]=p; bumpLog("q"); if(ok) bumpLog("c",1); save();
+}
+/* ---- 三條路線：互不重複、各自固定洗牌（密碼才能還原） ---- */
+function hashStr(t){ let h=2166136261; for(const c of t){ h^=c.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+function seededShuffle(arr, seed){ const a=[...arr]; let x=seed||1; const rnd=()=>{ x|=0; x=x+0x6D2B79F5|0; let t=Math.imul(x^x>>>15,1|x); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; };
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const RL = (()=>{ const used=new Set(); return GROUPS.map(g=>{ const own=GW[g.id].filter(x=>{ const k=x.w.toLowerCase(); if(used.has(k)) return false; used.add(k); return true; });
+  return seededShuffle(own, hashStr("route-"+g.id)); }); })();
+function preset(){ return PRESETS[0]; }
+const SORTED_RL = RL.map(l=>[...l].sort((a,b)=>a.w.toLowerCase().localeCompare(b.w.toLowerCase(),"es")));   // 單字庫依字母排列
+/* 依比例分配 n 個名額；某條路線字不夠時，由其他路線補上 */
+function allocate(n, ratio, avail){
+  const tot=ratio.reduce((a,b)=>a+b,0), exact=ratio.map(r=>r*n/tot), take=exact.map(Math.floor);
+  let left=n-take.reduce((a,b)=>a+b,0);
+  exact.map((e,i)=>[e-take[i],i]).sort((a,b)=>b[0]-a[0]).forEach(([,i])=>{ if(left>0){ take[i]++; left--; } });
+  let short=0; take.forEach((t,i)=>{ if(t>avail[i]){ short+=t-avail[i]; take[i]=avail[i]; } });
+  const order=ratio.map((r,i)=>[r,i]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]);
+  while(short>0){ let moved=false; for(const i of order){ if(short>0 && take[i]<avail[i]){ take[i]++; short--; moved=true; } } if(!moved) break; }
+  return take;
+}
+function pendingWords(){ return (S.pending||[]).map(k=>BY.get(k)).filter(x=>x && !S.prog[x.w.toLowerCase()]); }
+function nextNew(n){
+  // 上次沒學完的字優先，剩下的名額再依 2:2:2 從三條路線抽
+  const pend=pendingWords().slice(0,n), used=new Set(pend.map(x=>x.w.toLowerCase()));
+  const fresh=RL.map(list=>list.filter(x=>{ const k=x.w.toLowerCase(); return !S.prog[k] && !used.has(k); }));
+  const take=allocate(n-pend.length, preset().r, fresh.map(f=>f.length));
+  return [...pend, ...shuffle(fresh.flatMap((f,i)=>f.slice(0,take[i])))];
+}
+function routeLearned(i){ return RL[i].filter(x=>S.prog[x.w.toLowerCase()]).length; }
+/* ---- 4 位數進度密碼 ----
+   密碼記錄：已完成幾組 6 個字（0–639），共 640 種，打散對應到 0000–9999，
+   打錯時絕大多數會被判定為無效。回復時依同樣的比例重新排出每天的字。 */
+const PW_MUL=7919, PW_ADD=4321, PW_MAX=640;
+let PW_INV=1; for(let i=1;i<10000;i++){ if((PW_MUL*i)%10000===1){ PW_INV=i; break; } }
+function currentPassword(){
+  const total=RL.reduce((a,_,i)=>a+routeLearned(i),0), k=Math.min(PW_MAX-1, Math.floor(total/DAY)), pi=0;
+  const state=k;
+  return { code:String((state*PW_MUL+PW_ADD)%10000).padStart(4,"0"), count:k*DAY, preset:pi };
+}
+function decodePassword(code){
+  if(!/^\d{4}$/.test(code)) return null;
+  const state=(((+code-PW_ADD)%10000+10000)%10000*PW_INV)%10000;
+  if(state>=PRESETS.length*PW_MAX) return null;
+  const pi=Math.floor(state/PW_MAX), k=state%PW_MAX;
+  if(k*DAY>RL.reduce((a,l)=>a+l.length,0)) return null;
+  return { preset:pi, count:k*DAY };
+}
+function presetLabel(pi){ const p=PRESETS[pi]; return `${p.name}（${p.r.join(":")}）`; }
+function applyPassword(d){
+  S.settings.preset=d.preset;
+  const avail=RL.map(l=>l.length), got=[0,0,0];
+  for(let b=0;b<d.count/DAY;b++){ const t=allocate(DAY, PRESETS[d.preset].r, avail.map((a,i)=>a-got[i])); t.forEach((v,i)=>got[i]+=v); }
+  let added=0;
+  RL.forEach((list,i)=>list.slice(0,got[i]).forEach((x,j)=>{ const k=x.w.toLowerCase(); if(!S.prog[k]){ S.prog[k]=[3, today()+(j%7), 0, today()-1]; added++; } }));
+  save(); flush(); return added;
+}
+function pwCardHTML(){
+  const pw=currentPassword();
+  return `<div class="card"><div class="row"><h2 class="grow">🔑 進度密碼</h2><button class="icon" id="pwRestore">輸入密碼回復</button></div>
+    ${pw?`<div class="center" style="margin:6px 0"><span style="font-family:ui-monospace,Menlo,monospace;font-size:38px;font-weight:800;letter-spacing:10px;color:var(--accent)">${pw.code}</span></div>
+      <p class="muted center" style="margin:0">已學 ${pw.count} 個字</p>
+      <p class="muted" style="margin:8px 0 0">每天學完記下這組密碼。換手機或資料不見時，輸入密碼就能回到這個進度。</p>`:""}
+    <div id="pwBox"></div></div>`;
+}
+function bindPw(after){
+  const b=document.getElementById("pwRestore"); if(!b) return;
+  b.onclick=()=>{ const box=document.getElementById("pwBox");
+    box.innerHTML=`<div style="margin-top:10px"><input id="pwIn" inputmode="numeric" maxlength="4" placeholder="0000" class="answer" style="letter-spacing:8px"><div id="pwMsg"></div>
+      <div class="btns"><button class="btn" id="pwGo">確認</button></div></div>`;
+    const inp=document.getElementById("pwIn"); inp.focus();
+    document.getElementById("pwGo").onclick=()=>{
+      const d=decodePassword(inp.value.trim()), msg=document.getElementById("pwMsg");
+      if(!d){ msg.innerHTML='<div class="fb no">密碼不正確，請再確認一次。</div>'; return; }
+      msg.innerHTML=`<div class="fb ok">這組密碼是：<b>已學 ${d.count} 個字</b><br>回復後會補上這些字的學習紀錄，你目前已有的進度不會被刪除。</div>
+        <div class="btns"><button class="btn" id="pwYes">回復這個進度</button></div>`;
+      document.getElementById("pwYes").onclick=()=>{ const n=applyPassword(d); toast(`已回復進度，補上 ${n} 個字`); after(); };
+    };
+  };
+}
+
+/* ================= 發音 ================= */
+let voice=null;
+const APP_VERSION="v2（11/14 電腦不再用英文腔念西文）";
+const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+let voiceMode = (()=>{ try{ return localStorage.getItem("vocab_es_voice_mode")||"auto"; }catch(e){ return "auto"; } })();   // auto | plain | pick
+function pickVoice(){ if(!("speechSynthesis" in window)) return;
+  const vs=speechSynthesis.getVoices().filter(v=>/^es[-_]/i.test(v.lang));
+  voice = vs.find(v=>/es[-_]ES/i.test(v.lang)&&/Monica|Mónica|Google|Natural|Elvira|Alvaro|Lucia/i.test(v.name)) || vs.find(v=>/es[-_]ES/i.test(v.lang)) || vs[0] || null; }
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged=pickVoice; }
+/* Claude 語音（電腦版 App / Chrome 內可用）作為備援 */
+let tts=null, ttsBlocked=false, browserWorks=null;
+let ttsLangs=null;   // Claude 語音支援的語言；不支援西班牙文時不用它（否則會用英文腔念）
+(async()=>{ try{ if(window.claude && claude.use){ tts = await claude.use("tts");
+  if(tts && tts.languages){ ttsLangs = await tts.languages().catch(()=>null); } } }catch(e){ tts=null; } })();
+function ttsSpanish(){ return !!tts && !ttsBlocked && (!ttsLangs || ttsLangs.some(l=>/^es/i.test(l))); }
+function voicesLoaded(){ try{ return speechSynthesis.getVoices().length>0; }catch(e){ return false; } }
+let warnedNoEs=false;
+function noSpanishVoice(auto){ if(auto && warnedNoEs) return; warnedNoEs=true;
+  toast(IS_IOS?"找不到西班牙文聲音：設定 → 輔助使用 → 朗讀內容 → 聲音 → 西班牙文":"這台電腦沒有西班牙文聲音，所以不發音（避免用英文腔念）。請到「新增與設定 → 🔧 發音測試」看安裝方法"); }
+function hasBrowserVoice(){ try{ return ("speechSynthesis" in window) && speechSynthesis.getVoices().some(v=>/^es[-_]/i.test(v.lang)); }catch(e){ return false; } }
+function speakTTS(text, slow, quiet){
+  if(!tts || ttsBlocked){ if(!quiet) toast("這個裝置沒有可用的西班牙文發音"); return; }
+  tts.speak(text, {language:"es-ES", rate: slow?0.7:1}).catch(e=>{
+    const c=e&&e.code;
+    if(c==="not_granted"||c==="unavailable"){ ttsBlocked=true; if(!quiet) toast("朗讀功能已關閉，可在頁面的權限選單重新開啟"); }
+    else if(c==="rate_limited"){ if(!quiet) toast("發音次數太頻繁，請稍等一下再按"); }
+    else if(c==="no_gesture"){ if(quiet==="retry") toast("已切換成 Claude 語音，請再按一次 🔊"); }
+    else if(c==="stopped"){ /* 被下一個發音取代 */ }
+    else if(!quiet) toast("發音暫時失敗，請再按一次");
+  });
+}
+/* ---- 靜音模式也發音（iPhone）----
+   iPhone 的網頁發音會跟著靜音開關。做法：在第一次點擊時，
+   ① 把網頁音訊類型設成「播放」（iOS 17 以上支援 navigator.audioSession）
+   ② 循環播放一段無聲音訊，讓 iPhone 把這個網頁當成媒體播放，不受靜音開關影響。 */
+let silentModeOn = (()=>{ try{ return localStorage.getItem("vocab_es_silent_play")!=="off"; }catch(e){ return true; } })();
+let audioUnlocked=false, silentAudio=null;
+function silentWavURL(){
+  const rate=8000, n=rate/2, buf=new ArrayBuffer(44+n), v=new DataView(buf);
+  const w=(o,str)=>{ for(let i=0;i<str.length;i++) v.setUint8(o+i,str.charCodeAt(i)); };
+  w(0,"RIFF"); v.setUint32(4,36+n,true); w(8,"WAVE"); w(12,"fmt "); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,rate,true); v.setUint32(28,rate,true); v.setUint16(32,1,true); v.setUint16(34,8,true); w(36,"data"); v.setUint32(40,n,true);
+  for(let i=0;i<n;i++) v.setUint8(44+i,128);
+  return URL.createObjectURL(new Blob([buf],{type:"audio/wav"}));
+}
+function unlockAudio(){
+  if(!silentModeOn || audioUnlocked) return;
+  try{ if(navigator.audioSession) navigator.audioSession.type="playback"; }catch(e){}
+  try{
+    if(!silentAudio){ silentAudio=new Audio(silentWavURL()); silentAudio.loop=true; silentAudio.setAttribute("playsinline",""); silentAudio.volume=0.01; }
+    const pr=silentAudio.play(); audioUnlocked=true;
+    if(pr && pr.catch) pr.catch(()=>{ audioUnlocked=false; });
+  }catch(e){ audioUnlocked=false; }
+}
+function stopSilent(){ try{ if(silentAudio){ silentAudio.pause(); } }catch(e){} audioUnlocked=false; try{ if(navigator.audioSession) navigator.audioSession.type="auto"; }catch(e){} }
+if(IS_IOS){
+  ["touchend","click"].forEach(ev=>document.addEventListener(ev, unlockAudio, true));
+  document.addEventListener("visibilitychange", ()=>{ if(document.hidden){ try{ silentAudio&&silentAudio.pause(); }catch(e){} audioUnlocked=false; } });
+}
+function browserSpeak(text, slow){
+  if(IS_IOS) unlockAudio();
+  const ss=window.speechSynthesis;
+  if(ss.speaking||ss.pending) ss.cancel();          // iPhone：一律先 cancel 再 speak 有時會沒聲音，只在需要時才取消
+  if(!voice) pickVoice();
+  const u=new SpeechSynthesisUtterance(text); u.lang="es-ES"; u.rate=slow?0.6:0.95; u.volume=1;
+  // iPhone 指定聲音時，若該聲音沒下載會完全沒聲音，所以 iPhone 預設只指定語言、讓系統自己選聲音
+  const useVoice = voiceMode==="pick" || (voiceMode==="auto" && !IS_IOS);
+  if(useVoice && voice) u.voice=voice;
+  ss.speak(u); try{ ss.resume(); }catch(e){}
+  return u;
+}
+function speak(text, slow, auto){
+  const hasSS = "speechSynthesis" in window;
+  // 沒有可念西班牙文的 Claude 語音（例如 GitHub 版、Safari）：用裝置內建語音
+  if(!ttsSpanish()){
+    if(!hasSS){ if(!auto) toast("這個瀏覽器不支援發音"); return; }
+    // 電腦上沒有西班牙文聲音時，瀏覽器會改用英文聲音硬念，乾脆不念並提示安裝
+    if(!IS_IOS && voicesLoaded() && !hasBrowserVoice()){ noSpanishVoice(auto); return; }
+    try{ browserSpeak(text, slow); }catch(e){ if(!auto) toast("無法播放發音"); }
+    return;
+  }
+  // 有 Claude 語音（Claude 電腦版）：裝置有西班牙文語音就先用裝置的，沒聲音再改用 Claude 語音
+  if(hasSS && browserWorks!==false && hasBrowserVoice()){
+    try{
+      const u=browserSpeak(text, slow);
+      let started=false; u.onstart=()=>{ started=true; browserWorks=true; };
+      u.onerror=()=>{ if(!started){ browserWorks=false; speakTTS(text, slow, auto); } };
+      if(browserWorks===null) setTimeout(()=>{ if(!started){ browserWorks=false; try{speechSynthesis.cancel();}catch(e){} speakTTS(text, slow, auto?true:"retry"); } }, 1500);
+      return;
+    }catch(e){ browserWorks=false; }
+  }
+  speakTTS(text, slow, auto);
+}
+
+/* ================= 畫面框架 ================= */
+const app=document.getElementById("app");
+let state={tab:"home", learn:null, quiz:null, bank:{topic:"r0", q:"", open:null, filter:"all"}};
+document.getElementById("title").onclick=()=>{ if(state.learn||(state.quiz&&!state.quiz.done)) return; go("home"); };
+function go(tab){ state.tab=tab; document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("on",x.dataset.tab===tab)); render(); window.scrollTo(0,0); }
+function render(){ ({home:renderHome, learn:renderLearn, quiz:renderQuiz, bank:renderBank, add:renderAdd, pron:renderPron})[state.tab]();
+  if(state.tab==="bank"||state.tab==="add"||state.tab==="pron"){   // 子頁面最上方放「回首頁」
+    const b=document.createElement("div"); b.innerHTML='<button class="icon" id="backHome" style="margin-bottom:10px">← 回首頁</button>';
+    app.prepend(b); document.getElementById("backHome").onclick=()=>go("home"); } }
+function bindSpeak(root=app){
+  root.querySelectorAll("[data-say]").forEach(b=>b.onclick=e=>{e.stopPropagation(); speak(b.dataset.say);});
+  root.querySelectorAll("[data-slow]").forEach(b=>b.onclick=e=>{e.stopPropagation(); speak(b.dataset.slow,true);});
+  root.querySelectorAll("[data-star]").forEach(b=>b.onclick=e=>{e.stopPropagation(); const k=b.dataset.star.toLowerCase(); S.stars[k]?delete S.stars[k]:S.stars[k]=1; save(); b.textContent=S.stars[k]?"★":"☆";});
+}
+function spk(x){ return `<button class="icon" data-say="${esc(x.w)}">🔊</button><button class="icon" data-slow="${esc(x.w)}">🐢</button><button class="icon star" data-star="${esc(x.w)}">${S.stars[x.w.toLowerCase()]?"★":"☆"}</button>`; }
+function exBlock(x){ return x.ex?`<div class="ex"><div class="row"><div class="grow">${esc(x.ex)}</div><button class="icon" data-say="${esc(x.ex)}">🔊</button></div>${x.exZh?`<div class="zh2">${esc(x.exZh)}</div>`:""}</div>`:""; }
+
+/* ================= 今日 ================= */
+function renderHome(){
+  const total=ALL.length, L=learnedCount(), due=dueList().length, tl=todayLog(), goal=DAY, pr=preset();
+  const remainNew=Math.max(0, goal-tl.n), todayN=recentLearned(1).length, learnedN=Object.keys(S.prog).filter(k=>BY.has(k)).length;
+  const streak = (S.streak.last>=today()-1)? S.streak.n : 0;
+  const daysLeft = Math.ceil(Math.max(0,total-L)/goal);
+  app.innerHTML = `
+  <div class="stats">
+    <div class="stat"><b>${L}</b><small>已學 / ${total}</small></div>
+    <div class="stat"><b>${masteredCount()}</b><small>已熟記</small></div>
+    <div class="stat"><b>${streak}🔥</b><small>連續天數</small></div>
+  </div>
+  <div class="card">
+    <h2>三條路線・每天 ${DAY} 個字</h2>
+    ${GROUPS.map((g,i)=>{ const n=routeLearned(i), all=RL[i].length;
+      return `<div style="padding:10px 0;border-top:1px solid var(--line)">
+        <div class="row"><div class="grow"><b>${g.icon} ${g.name}</b> <span class="tag">每天 ${pr.r[i]} 個</span><div class="muted">${g.desc}</div></div><span class="muted">${n}/${all}</span></div>
+        <div class="bar" style="margin-top:6px"><i style="width:${all?n/all*100:0}%"></i></div></div>`; }).join("")}
+    <p class="muted" style="margin:8px 0 0">全部共 ${total} 個字，已學 ${(L/total*100).toFixed(1)}%，照每天 ${DAY} 個約 ${daysLeft} 天學完。某條路線學完時，名額會自動分給其他路線。</p>
+  </div>
+  <div class="card">
+    <h2>今天的任務</h2>
+    ${remainNew?`
+    <div class="row" style="margin-top:6px"><div class="grow">🃏 今天的目標：${goal} 個新字</div><span class="muted">${tl.n} / ${goal}</span></div>
+    <div class="bar" style="margin:6px 0 10px"><i style="width:${tl.n/goal*100}%"></i></div>
+    ${!tl.n&&pendingWords().length?`<p class="muted" style="margin:0 0 8px">📌 上次沒學完的 ${Math.min(pendingWords().length,remainNew)} 個字會先出現。</p>`:""}
+    <button class="btn" id="goLearn">${tl.n?`繼續學剩下的 ${remainNew} 個字`:`開始學今天的 ${remainNew} 個字`}</button>`:`
+    <div class="fb ok" style="margin:6px 0 10px">✅ 今天的 ${goal} 個字完成了！${tl.n>goal?`今天總共學了 ${tl.n} 個字。`:""}</div>
+    <button class="btn ghost" id="goLearn">有空的話，再多學 ${DAY} 個</button>`}
+    <p class="muted center" style="margin:6px 0 0">學到一半有事，按「結束學習」就能離開，學過的字都會保存。</p>
+    <div class="row" style="margin-top:10px"><div class="grow">🔑 進度密碼：<b style="font-family:ui-monospace,Menlo,monospace;font-size:20px;letter-spacing:4px;color:var(--accent)">${currentPassword().code}</b></div><button class="icon" id="pwRestore">輸入密碼回復</button></div>
+    <div id="pwBox"></div>
+    <div class="row" style="margin-top:14px"><div class="grow">✍️ 拼字複習</div>${due?`<span class="muted">${due} 個字到期該複習</span>`:""}</div>
+    <div class="btns">
+      <button class="btn" id="goToday" ${todayN?"":"disabled"}>複習今天的字<br><small>${todayN} 題</small></button>
+      <button class="btn" id="goReview" ${learnedN?"":"disabled"}>總複習<br><small>隨機 ${Math.min(TOTAL_Q,learnedN)} 題</small></button>
+    </div>
+    ${tl.q?`<p class="muted" style="margin:10px 0 0">今天已作答 ${tl.q} 題，答對 ${tl.c} 題。</p>`:""}
+  </div>
+  <div class="btns" style="margin-bottom:10px">
+    <button class="btn ghost" id="goBank">📚 單字庫<br><small>查字、聽發音、收藏</small></button>
+    <button class="btn ghost" id="goAdd">➕ 新增與設定<br><small>自訂單字、備份、發音</small></button>
+  </div>
+  <button class="btn ghost" id="goPron" style="margin-bottom:10px">🔤 發音入門：西班牙文怎麼念<br><small>零基礎先看這裡，12 條規則就能看字念出來</small></button>`;
+  document.getElementById("goLearn").onclick=()=>{ startLearn(remainNew||DAY); };
+  bindPw(renderHome);
+  document.getElementById("goToday").onclick=()=>startQuiz(shuffle(recentLearned(1)), "今天的字");
+  document.getElementById("goReview").onclick=()=>startQuiz(totalReviewItems(), "總複習");
+  document.getElementById("goBank").onclick=()=>go("bank");
+  document.getElementById("goAdd").onclick=()=>go("add");
+  document.getElementById("goPron").onclick=()=>go("pron");
+
+}
+
+/* ================= 學新字（字卡） ================= */
+function startLearn(n){
+  const items = nextNew(n||DAY);
+  if(!items.length){ toast("全部的字都學完了，太厲害了！"); go("home"); return; }
+  state.learn={items, i:0, done:[]}; go("learn");
+}
+function renderLearn(){
+  const L=state.learn;
+  if(!L){ const remain=Math.max(0,DAY-todayLog().n); startLearn(remain||DAY); return; }   // 點「學新字」直接開始，不再多一頁
+  S.pending = L.items.slice(L.i).map(x=>x.w.toLowerCase()); lsSave();   // 隨時記住還沒學的字，被打斷也不會漏掉
+  if(L.i>=L.items.length){
+    app.innerHTML=`<div class="card center"><div class="big">🎉 ${L.done.length}</div><p>個新字學完了！</p>
+      ${`<p>🔑 目前的進度密碼：<b style="font-family:ui-monospace,Menlo,monospace;font-size:24px;letter-spacing:5px;color:var(--accent)">${currentPassword().code}</b><br><span class="muted">記下來，換手機時可以用它回復進度。</span></p>`}
+      <p class="muted">趁記憶還熱，馬上用拼字測驗加深印象吧。</p>
+      <div class="btns"><button class="btn ghost" id="h">回首頁</button><button class="btn" id="q">拼字測驗</button></div></div>`;
+    document.getElementById("h").onclick=()=>{ state.learn=null; go("home"); };
+    document.getElementById("q").onclick=()=>{ const it=L.done; state.learn=null; startQuiz(shuffle([...it]), "剛學的字"); };
+    return;
+  }
+  const x=L.items[L.i];
+  app.innerHTML=`<div class="q-meta"><span>${esc(x.topic)}</span><span>${L.i+1} / ${L.items.length}</span></div>
+  <div class="bar" style="margin-bottom:10px"><i style="width:${L.i/L.items.length*100}%"></i></div>
+  <div class="card">
+    <div class="bigword">${esc(x.w)}</div>
+    <div class="center pos">${esc(x.pos)}</div>
+    <div class="center btns" style="justify-content:center">${spk(x)}</div>
+    <div class="center zh" style="margin-top:10px;font-size:20px">${esc(x.zh)}</div>
+    ${exBlock(x)}
+  </div>
+  <div class="btns"><button class="btn ghost" id="no">還不熟</button><button class="btn" id="yes">記住了 ✓</button></div>
+  <div class="center" style="margin-top:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+    ${L.done.length?`<button class="icon" id="midQuiz">✍️ 先測驗已看過的 ${L.done.length} 個字</button>`:""}
+    <button class="icon" id="quitLearn">🏠 結束學習，回首頁</button></div>`;
+  bindSpeak(); speak(x.w,false,true);
+  const mq=document.getElementById("midQuiz"); if(mq) mq.onclick=()=>{ const it=[...L.done]; L.items=L.items.slice(L.i); L.i=0; L.done=[]; state.resumeLearn=L; state.learn=null; startQuiz(shuffle(it), "剛學的字"); };
+  document.getElementById("quitLearn").onclick=()=>{ S.pending=L.items.slice(L.i).map(x=>x.w.toLowerCase()); save(); state.learn=null; go("home"); if(L.done.length) toast(`已看過的 ${L.done.length} 個字有保存`); };
+  document.getElementById("no").onclick=()=>{ markLearned(x,false); L.done.push(x); L.i++; renderLearn(); };
+  document.getElementById("yes").onclick=()=>{ markLearned(x,true); L.done.push(x); L.i++; renderLearn(); };
+}
+
+/* ================= 測驗 ================= */
+function startQuiz(items, label){
+  if(!items.length){ toast("沒有可以測驗的字"); return; }
+  state.quiz={items, i:0, score:0, wrong:[], retry:false, label, first:items.length, done:false, orig:[...items]};
+  state.tab="quiz"; document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("on",x.dataset.tab==="quiz"));
+  renderQuestion(); window.scrollTo(0,0);
+}
+const TOTAL_Q = 10;   // 總複習固定 10 題
+function totalReviewItems(){
+  // 每次都從學過的字裡完全隨機抽 10 個
+  const learned=Object.keys(S.prog).map(k=>BY.get(k)).filter(Boolean);
+  return shuffle(learned).slice(0, TOTAL_Q);
+}
+function renderQuiz(){
+  if(state.quiz && !state.quiz.done) return renderQuestion();
+  const todays=recentLearned(1);
+  const learned=Object.keys(S.prog).map(k=>BY.get(k)).filter(Boolean);
+  app.innerHTML=`
+  <div class="card"><h2>🆕 今天的字測驗</h2>
+    <p class="muted" style="margin-top:0">考今天學過的 ${todays.length} 個字，全部都會出現。</p>
+    <button class="btn" id="qToday" ${todays.length?"":"disabled"}>${todays.length?`開始測驗（${todays.length} 題）`:"今天還沒學新字"}</button></div>
+  <div class="card"><h2>📚 總複習</h2>
+    <p class="muted" style="margin-top:0">從你學過的 ${learned.length} 個字裡隨機抽 ${Math.min(TOTAL_Q,learned.length)} 題，每次按都不一樣。</p>
+    <div class="btns"><button class="btn" id="qAll" ${learned.length?"":"disabled"}>開始總複習</button></div></div>
+  <p class="muted center">每一題：看中文和例句、聽發音，把空格的西班牙文拼出來。<br>答錯的字最後會再考一次，並排進近期複習。</p>`;
+  document.getElementById("qToday").onclick=()=>startQuiz(shuffle([...todays]), "今天的字");
+  document.getElementById("qAll").onclick=()=>startQuiz(totalReviewItems(), "總複習");
+}
+function blankSentence(x){
+  if(!x.ex) return null;
+  let sp=x.sp;
+  if(!sp){ const m=x.ex.match(new RegExp("(?<!\\p{L})"+x.w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\p{L}*","iu")); if(m) sp=[m.index,m.index+m[0].length]; }
+  if(!sp) return {html:esc(x.ex), changed:false};
+  const form=x.ex.slice(sp[0],sp[1]);
+  return { html: esc(x.ex.slice(0,sp[0]))+`<span class="blank">${"_".repeat(Math.max(3,Math.min(12,form.length)))}</span>`+esc(x.ex.slice(sp[1])),
+           changed: form.toLowerCase()!==x.w.toLowerCase(), form };
+}
+function renderQuestion(){
+  const q=state.quiz, x=q.items[q.i]; q.hints=0; q.answered=false;
+  q.hintOrder=shuffle([...x.w].map((c,i)=>c===" "||c==="-"?-1:i).filter(i=>i>=0));   // 提示隨機揭露字母位置
+  const b=blankSentence(x);
+  app.innerHTML=`<div class="q-meta"><span>${q.retry?"🔁 錯題再練":esc(q.label)+"・第 "+(q.i+1)+" / "+q.items.length+" 題"}</span><span>答對 ${q.score}</span></div>
+  <div class="bar" style="margin-bottom:10px"><i style="width:${q.i/q.items.length*100}%"></i></div>
+  <div class="card">
+    <div class="q-zh">${esc(x.zh)} <span class="pos">${esc(x.pos)}</span></div>
+    ${b?`<div class="q-sent">${b.html}</div>${x.exZh?`<div class="zh2">${esc(x.exZh)}</div>`:""}${b.changed?`<div class="muted" style="margin-top:4px">💬 空格裡是這個字的變化形（動詞變化或複數），請拼出<b>原形</b>（字典上的寫法）。</div>`:""}`:""}
+    <div class="btns"><button class="icon" id="say">🔊 聽單字</button><button class="icon" id="slow">🐢 慢速</button><button class="icon" id="hint">💡 提示</button></div>
+    <div id="hintBox" class="muted" style="margin-top:8px"></div>
+    <input id="ans" class="answer" style="margin-top:10px" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入拼字">
+    <div class="acc">${ACC.map(c=>`<button data-acc="${c}">${c}</button>`).join("")}</div>
+    <div id="fb"></div>
+    <div class="btns"><button class="btn ghost" id="skip">不會，看答案</button><button class="btn" id="check">送出</button></div>
+  </div>
+  <div class="center"><button class="icon" id="quit" style="margin-top:4px">結束測驗</button></div>`;
+  const ans=document.getElementById("ans");
+  app.querySelectorAll("[data-acc]").forEach(b=>{ b.onmousedown=e=>e.preventDefault(); b.onclick=()=>{ const s=ans.selectionStart??ans.value.length, e=ans.selectionEnd??s; ans.value=ans.value.slice(0,s)+b.dataset.acc+ans.value.slice(e); ans.focus(); ans.setSelectionRange(s+1,s+1); }; });
+  document.getElementById("say").onclick=()=>speak(x.w);
+  document.getElementById("slow").onclick=()=>speak(x.w,true);
+  document.getElementById("hint").onclick=()=>{ q.hints=Math.min(q.hints+1,q.hintOrder.length);
+    const open=new Set(q.hintOrder.slice(0,q.hints));
+    const shown=x.w.split("").map((ch,i)=>ch===" "?"   ":ch==="-"?"-":(open.has(i)?ch:"_")).join(" ");
+    document.getElementById("hintBox").textContent=`提示：${shown}（${q.hintOrder.length} 個字母）`; };
+  document.getElementById("check").onclick=()=>check(false);
+  document.getElementById("skip").onclick=()=>check(true);
+  document.getElementById("quit").onclick=()=>finish();
+  ans.addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); q.answered?next():check(false); } });
+  ans.focus(); speak(x.w,false,true);
+}
+const norm=s=>s.trim().toLowerCase().replace(/[’']/g,"'").replace(/[¿?¡!.,]/g,"").replace(/\s+/g," ");
+const ACC=["á","é","í","ó","ú","ñ","ü"];
+const plain=s=>norm(s).normalize("NFD").replace(/[\u0300-\u036f]/g,"");   // 去掉重音（ñ 也會變成 n）
+function diffHTML(input,target){ let o=""; for(let i=0;i<target.length;i++){ const c=target[i]; o+=(input[i]&&input[i].toLowerCase()===c.toLowerCase())?esc(c):`<b>${esc(c)}</b>`; } return o; }
+function check(giveUp){
+  const q=state.quiz, x=q.items[q.i]; if(q.answered) return next();
+  const v=document.getElementById("ans").value;
+  if(!giveUp && !v.trim()){ toast("請先輸入答案"); return; }
+  q.answered=true;
+  const exact=!giveUp && norm(v)===norm(x.w);
+  const nearly=!giveUp && !exact && plain(v)===plain(x.w);   // 只差重音符號或 ñ：算對，但提醒
+  const ok=exact||nearly;
+  const fb=document.getElementById("fb");
+  if(!q.retry) grade(x, ok && q.hints<2);
+  if(ok){ if(!q.retry) q.score++; fb.innerHTML=`<div class="fb ok">✅ 正確！<b>${esc(x.w)}</b>${q.hints?`（用了 ${q.hints} 個提示）`:""}${nearly?`<div class="muted" style="margin-top:4px">⚠️ 注意重音符號：正確寫法是 <b>${esc(x.w)}</b>，你寫的是 ${esc(v)}</div>`:""}</div>`; }
+  else{ if(!q.wrong.includes(x)) q.wrong.push(x);
+    fb.innerHTML=`<div class="fb no">${giveUp?"答案是：":"❌ 正確拼法："}<div class="diff">${diffHTML(norm(v),x.w)}</div>${v.trim()&&!giveUp?`<div class="muted">你寫的：${esc(v)}</div>`:""}</div>`; }
+  speak(x.w);
+  const btn=document.getElementById("check"); btn.textContent="下一題 →"; btn.onclick=next;
+  document.getElementById("skip").style.display="none";
+}
+function next(){
+  const q=state.quiz; q.i++;
+  if(q.i<q.items.length) return renderQuestion();
+  if(!q.retry && q.wrong.length){
+    q.missed=[...q.wrong]; q.retry=true; q.items=shuffle([...q.wrong]); q.i=0; q.wrong=[];
+    app.innerHTML=`<div class="card center"><h2>第一輪：${q.score} / ${q.first}</h2><p class="muted">把答錯的 ${q.items.length} 個字再練一次。</p><button class="btn" id="go">開始</button></div>`;
+    document.getElementById("go").onclick=renderQuestion; return;
+  }
+  finish();
+}
+function finish(){
+  const q=state.quiz; q.done=true; flush();
+  const missed=q.missed||q.wrong||[]; const answered=q.retry?q.first:q.i;
+  const pct=answered?Math.round(q.score/answered*100):0;
+  app.innerHTML=`<div class="card center"><div class="muted">${esc(q.label)}・完成</div><div class="big">${q.score} / ${answered}</div>
+    <div>${pct>=90?"太厲害了！🎉":pct>=70?"很不錯，繼續保持！💪":"多練幾次就會越來越熟 🌱"}</div></div>
+  ${missed.length?`<div class="card"><h2>這次拼錯的字</h2>${missed.map(x=>`<div class="row" style="margin-top:8px"><div class="grow"><b>${esc(x.w)}</b> <span class="muted">${esc(x.zh)}</span></div>${spk(x)}</div>`).join("")}
+    <p class="muted">這些字已經排進今天的複習清單。</p></div>`:""}
+  ${state.resumeLearn&&state.resumeLearn.items.length?`<div class="btns"><button class="btn" id="resume">🃏 繼續學剩下的 ${state.resumeLearn.items.length} 個新字</button></div>`:""}
+  <div class="btns"><button class="btn ghost" id="home">回首頁</button><button class="btn ghost" id="again">${q.label==="總複習"?"再來 10 題":"再測一次"}</button></div>`;
+  bindSpeak();
+  const rs=document.getElementById("resume"); if(rs) rs.onclick=()=>{ state.quiz=null; state.learn=state.resumeLearn; state.resumeLearn=null; go("learn"); };
+  document.getElementById("home").onclick=()=>{ state.quiz=null; go("home"); };
+  document.getElementById("again").onclick=()=>{ const lb=q.label, it= lb==="總複習"? totalReviewItems() : lb==="今天的字"? shuffle(recentLearned(1)) : shuffle([...q.orig]); state.quiz=null; startQuiz(it, lb); };
+}
+
+/* ================= 單字庫 ================= */
+function renderBank(){
+  const B=state.bank;
+  app.innerHTML=`<input id="q" placeholder="🔍 搜尋西班牙文或中文（全部 ${ALL.length} 字）" value="${esc(B.q)}">
+  <div class="row" style="margin-top:8px">
+    <select id="tp" class="grow" ${B.q?"disabled":""}>${GROUPS.map((g,i)=>`<option value="r${i}" ${B.topic==="r"+i?"selected":""}>${g.icon} ${g.name}（${RL[i].length}）</option>`).join("")}${S.custom.length?`<option value="我的單字" ${B.topic==="我的單字"?"selected":""}>✏️ 我的單字（${S.custom.length}）</option>`:""}</select>
+    <select id="flt" style="width:auto"><option value="all">全部</option><option value="new">未學</option><option value="learned">已學</option><option value="star">收藏</option></select>
+  </div>
+  <div class="card list" id="list" style="margin-top:10px"></div>`;
+  document.getElementById("flt").value=B.filter;
+  const q=document.getElementById("q");
+  q.oninput=()=>{ B.q=q.value; B.open=null; document.getElementById("tp").disabled=!!B.q; drawList(); };
+  document.getElementById("tp").onchange=e=>{ B.topic=e.target.value; B.open=null; drawList(); };
+  document.getElementById("flt").onchange=e=>{ B.filter=e.target.value; drawList(); };
+  drawList();
+}
+function drawList(){
+  const B=state.bank, el=document.getElementById("list");
+  let list;
+  if(B.q.trim()){ const s=plain(B.q); list=[...ALL,...S.custom].filter(x=>plain(x.w).includes(s)||x.zh.includes(B.q.trim())).slice(0,200); }
+  else if(B.topic==="我的單字") list=S.custom;
+  else { const i=/^r\d$/.test(B.topic)?+B.topic.slice(1):0; list=SORTED_RL[i]; }
+  if(B.filter==="new") list=list.filter(x=>!P(x.w));
+  if(B.filter==="learned") list=list.filter(x=>P(x.w));
+  if(B.filter==="star") list=list.filter(x=>S.stars[x.w.toLowerCase()]);
+  if(!list.length){ el.innerHTML=`<div class="empty">${B.topic==="我的單字"&&!B.q?"還沒有自訂單字，到「新增」加入吧。":"沒有符合的單字"}</div>`; return; }
+  const learnedN=list.filter(x=>P(x.w)).length;
+  el.innerHTML=`<div class="row muted" style="padding-bottom:6px;border-bottom:1px solid var(--line)"><span class="grow">${list.length} 個字・已學 ${learnedN}</span>
+    ${!B.q?`<button class="icon" id="qt">測驗整組</button><button class="icon" id="qd" ${learnedN?"":"disabled"}>測驗已學過</button>`:""}</div>`+
+  list.map((x,i)=>{ const p=P(x.w); const tag=!p?'<span class="tag new">未學</span>':(p[1]<=today()?'<span class="tag due">待複習</span>':(p[0]>=MASTER_BOX?'<span class="tag">熟記</span>':'<span class="tag">學習中</span>'));
+    return `<div class="item" data-i="${i}"><div class="grow"><span class="w">${esc(x.w)}</span>${tag}<div class="m">${esc(x.pos)} ${esc(x.zh)}</div></div><button class="icon" data-say="${esc(x.w)}">🔊</button></div>
+    ${B.open===i?`<div class="detail">${exBlock(x)}<div class="btns">${spk(x)}${x.custom?`<button class="icon" data-del="${esc(x.w)}" style="color:var(--warn)">刪除</button>`:""}</div></div>`:""}`; }).join("");
+  bindSpeak(el);
+  el.querySelectorAll(".item").forEach(it=>it.onclick=()=>{ const i=+it.dataset.i; B.open=B.open===i?null:i; drawList(); });
+  el.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{ const w=b.dataset.del; S.custom=S.custom.filter(c=>c.w!==w); delete S.prog[w.toLowerCase()]; BY.delete(w.toLowerCase()); save(); B.open=null; drawList(); });
+  const qd=document.getElementById("qd"); if(qd) qd.onclick=()=>{ const pool=list.filter(x=>P(x.w)); if(!pool.length){ toast("這組還沒有學過的字"); return; }
+    startQuiz(shuffle([...pool]).slice(0,TOTAL_Q), (/^r\d$/.test(B.topic)?GROUPS[+B.topic.slice(1)].name:B.topic)+"・已學過"); };
+  const qt=document.getElementById("qt"); if(qt) qt.onclick=()=>{
+    const pool = list;   // 整組都可以測（沒學過的字只當練習，不會被算成已學）
+    startQuiz(shuffle([...pool]).slice(0,TOTAL_Q), /^r\d$/.test(B.topic)?GROUPS[+B.topic.slice(1)].name:B.topic); };
+}
+
+/* ================= 發音入門 ================= */
+const PRON=[
+  ["a e i o u","五個母音永遠念同一個音：a（啊）e（ㄝ）i（一）o（喔）u（嗚），短而清楚。",["casa","mesa","libro","uno"]],
+  ["看字就能念","西班牙文幾乎是「怎麼寫就怎麼念」，每個字母都要念出來（h 例外）。",["chocolate","importante"]],
+  ["h 不發音","h 是啞巴字母，hola 念「歐拉」。",["hola","hotel","hijo"]],
+  ["j、ge、gi","j 和 ge、gi 都是喉嚨發出的「ㄏ」音，比中文更用力。",["jueves","gente","Gijón"]],
+  ["ca co cu／ce ci","c 在 a、o、u 前念「ㄎ」；在 e、i 前念像英文 th（西班牙）或「ㄙ」（拉美）。z 也一樣。",["casa","cena","cinco","zumo"]],
+  ["que qui","qu 念「ㄎ」，u 不發音：que（ㄎㄝ）、qui（ㄎ一）。",["queso","quince"]],
+  ["ll 和 y","ll 和 y 念起來差不多，像中文「一」帶一點「ㄐ」的音。",["llave","calle","yo"]],
+  ["ñ","ñ 像「ㄋ一」：año 念「阿紐」。",["año","español","niño"]],
+  ["r 和 rr","單一個 r 輕彈一下舌頭；字首的 r 和 rr 要捲舌連續顫動。",["pero","perro","rojo"]],
+  ["v 和 b","v 和 b 念法一樣，都像「ㄅ」。",["vino","bien","vale"]],
+  ["重音在哪裡","有重音符號（á é í ó ú）就念那個音節；沒有的話，母音、n、s 結尾的字重音在倒數第二個音節，其他在最後一個音節。",["café","teléfono","casa","hablar"]],
+  ["¿ ¡","問句和驚嘆句前面要加倒過來的 ¿ 和 ¡。",["¿Qué tal?","¡Hola!"]]
+];
+function renderPron(){
+  app.innerHTML=`<div class="card"><h2>🔤 西班牙文發音入門</h2>
+    <p class="muted" style="margin-top:0">點每個字聽聽看。學會這幾條規則，看到新字也大概念得出來。</p>
+    ${PRON.map(([k,d,ex])=>`<div class="rule"><b class="k">${esc(k)}</b><div style="margin:2px 0 6px">${esc(d)}</div>
+      <div class="seg">${ex.map(w=>`<button data-say="${esc(w)}">🔊 ${esc(w)}</button>`).join("")}</div></div>`).join("")}</div>
+  <div class="card"><h2>💡 小提醒</h2>
+    <p class="muted" style="margin:0">・名詞有陰陽性：單字卡會標「陽性 el」或「陰性 la」，記單字時連冠詞一起記（el libro、la casa）。<br>
+    ・這本單字本以西班牙用字為主，拉丁美洲不同的說法會寫在中文解釋裡。<br>
+    ・iPhone 打重音字母：長按 a、e、n 等鍵就會出現 á、é、ñ；測驗時也可以點輸入框下方的按鈕。</p></div>`;
+  bindSpeak();
+}
+
+/* ================= 新增 ================= */
+function renderAdd(){
+  app.innerHTML=`<div class="card"><h2>新增你自己的單字</h2>
+    <p class="muted" style="margin-top:0">工作或生活中遇到的新字加進來，會放在「我的單字」，也會排進複習和測驗。</p>
+    <label>西班牙文單字 *</label><input id="w" autocapitalize="off" placeholder="例如：mochila">
+    <label>詞性</label><input id="pos" placeholder="例如：名詞・陰性 la、動詞、形容詞">
+    <label>中文意思 *</label><input id="zh" placeholder="例如：背包">
+    <label>西班牙文例句（測驗時會把單字挖空）</label><textarea id="ex" rows="2" placeholder="例如：Mi mochila es azul."></textarea>
+    <label>例句中文翻譯</label><input id="exZh" placeholder="例如：我的背包是藍色的。">
+    <div class="btns"><button class="icon" id="try">🔊 試聽</button></div>
+    <div class="btns"><button class="btn" id="save">加入單字本</button></div></div>
+  <div class="card"><h2>一次貼上很多字</h2>
+    <p class="muted" style="margin-top:0">每行一個：<code>單字 | 中文 | 例句 | 例句翻譯</code>（後兩項可省略）</p>
+    <textarea id="bulk" rows="5" placeholder="mochila | 背包 | Mi mochila es azul. | 我的背包是藍色的。"></textarea>
+    <div class="btns"><button class="btn ghost" id="bulkSave">批次加入</button></div></div>
+  <div class="card"><h2>進度保存</h2>
+    <p class="muted" style="margin:0">${cloud?"☁️ 你的學習進度、收藏和自訂單字會存到你的 Claude 帳號，換手機或電腦登入同一個帳號打開就能接著學。":"目前存在這個瀏覽器裡。登入 Claude 打開這個頁面時，進度會自動同步到你的帳號。"}</p>
+    <div class="btns"><button class="btn ghost" id="copy">複製我的單字（${S.custom.length} 個）</button></div></div>
+  <div class="card"><h2>🔧 發音測試</h2>
+    <div id="diag" class="muted" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap"></div>
+    <label>發音方式</label>
+    <div class="seg" id="vmSeg"><button data-v="auto">自動</button><button data-v="plain">系統預設聲音</button><button data-v="pick">指定西文聲音</button></div>
+    <div class="btns"><button class="btn ghost" id="vTest">🔊 測試發音：Hola, mucho gusto.</button></div>
+    <div class="btns"><button class="btn ghost" id="smBtn"></button></div>
+    <p class="muted" style="margin:6px 0 0">開啟後，iPhone 靜音時也會發音；但用單字本時，背景音樂（例如 Spotify）可能會被暫停。</p>
+    <p class="muted" style="margin:8px 0 0">💻 電腦念起來像英文腔：代表電腦沒有西班牙文聲音。<br>・Windows：設定 → 時間與語言 → 語音 → 新增語音 → 選「Español (España)」，裝好後重新開啟這頁。<br>・Mac：系統設定 → 輔助使用 → 朗讀內容 → 系統聲音 → 管理聲音 → 西班牙文，下載「Mónica」。<br>・或改用 Chrome／Edge 瀏覽器打開，它們內建西班牙文聲音。</p>
+    <p class="muted" style="margin:8px 0 0">iPhone 沒聲音時請檢查：① 側邊靜音開關或「動作按鈕」不要開靜音 ② 音量調大 ③ 設定 → 輔助使用 → 朗讀內容 → 聲音 → 西班牙文，下載一個西班牙文聲音（例如 Mónica）。</p></div>
+  <div class="card"><h2>完整進度備份</h2>
+    <p class="muted" style="margin-top:0">把學習進度、收藏、自訂單字整包複製成一段備份碼，貼到記事本或傳給自己保存。換手機、換瀏覽器或清除資料後，貼回來就能還原。</p>
+    <div class="btns"><button class="btn ghost" id="bk">📋 複製進度備份碼</button></div>
+    <textarea id="bkText" rows="3" placeholder="要還原時，把備份碼貼在這裡" style="margin-top:10px"></textarea>
+    <div class="btns"><button class="btn ghost" id="rs">♻️ 用備份碼還原</button></div>
+    <div id="rsConfirm"></div></div>`;
+  const $=id=>document.getElementById(id);
+  const showDiag=()=>{ let v=[]; try{ v=speechSynthesis.getVoices(); }catch(e){}
+    const en=v.filter(x=>/^es[-_]/i.test(x.lang));
+    $("diag").textContent=`版本：${APP_VERSION}\n裝置：${IS_IOS?"iPhone/iPad":"其他"}\n支援語音：${"speechSynthesis" in window?"是":"否"}\n聲音數量：${v.length}（西班牙文 ${en.length}）\n指定聲音：${voice?voice.name+" "+voice.lang:"無"}\nClaude 語音：${tts?(ttsSpanish()?"有（可念西文）":"有，但不支援西文，不使用"):"無"}${ttsLangs?"（"+ttsLangs.join(",")+"）":""}\n靜音模式發音：${silentModeOn?"開":"關"}（${navigator.audioSession?"支援音訊類型設定":"不支援音訊類型設定"}，無聲音訊${audioUnlocked?"播放中":"未播放"}）`;
+    $("smBtn").textContent = silentModeOn ? "🔔 靜音模式也發音：開（點一下關閉）" : "🔕 靜音模式也發音：關（點一下開啟）";
+    document.querySelectorAll("#vmSeg button").forEach(b=>b.classList.toggle("on",b.dataset.v===voiceMode)); };
+  showDiag(); try{ speechSynthesis.onvoiceschanged=()=>{ pickVoice(); showDiag(); }; }catch(e){}
+  document.querySelectorAll("#vmSeg button").forEach(b=>b.onclick=()=>{ voiceMode=b.dataset.v; try{ localStorage.setItem("vocab_es_voice_mode",voiceMode); }catch(e){} showDiag(); speak("Hola, mucho gusto."); });
+  $("vTest").onclick=()=>{ speak("Hola, mucho gusto."); setTimeout(showDiag,300); };
+  $("smBtn").onclick=()=>{ silentModeOn=!silentModeOn; try{ localStorage.setItem("vocab_es_silent_play", silentModeOn?"on":"off"); }catch(e){} if(silentModeOn) unlockAudio(); else stopSilent(); showDiag(); };
+  $("try").onclick=()=>{ const w=$("w").value.trim(); if(w) speak(w); };
+  const addOne=(item)=>{ if(BY.has(item.w.toLowerCase())) return false; item.custom=true; item.topic="我的單字"; S.custom.push(item); BY.set(item.w.toLowerCase(), item); return true; };
+  $("save").onclick=()=>{ const item={w:$("w").value.trim(),pos:$("pos").value.trim(),zh:$("zh").value.trim(),ex:$("ex").value.trim(),exZh:$("exZh").value.trim()};
+    if(!item.w||!item.zh){ toast("請至少填西班牙文單字和中文意思"); return; }
+    if(!addOne(item)){ toast(`「${item.w}」已經在單字本裡了`); return; }
+    save(); toast(`已加入「${item.w}」`); render(); };
+  $("bulkSave").onclick=()=>{ let n=0,dup=0; $("bulk").value.split("\n").forEach(line=>{ const p=line.split("|").map(s=>s.trim());
+      if(p[0]&&p[1]){ addOne({w:p[0],pos:"",zh:p[1],ex:p[2]||"",exZh:p[3]||""})?n++:dup++; } });
+    if(!n){ toast(dup?"這些字都已經在單字本裡了":"沒有讀到格式正確的行"); return; }
+    save(); toast(`已加入 ${n} 個單字`+(dup?`（${dup} 個重複略過）`:"")); render(); };
+  $("bk").onclick=async()=>{ const txt="VOCABES1:"+btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+    try{ await navigator.clipboard.writeText(txt); toast("備份碼已複製，請貼到記事本保存"); } catch(e){ $("bkText").value=txt; $("bkText").select(); toast("無法自動複製，備份碼已放在下方文字框，請手動複製"); } };
+  $("rs").onclick=()=>{ const v=$("bkText").value.trim(); let d=null;
+    try{ if(v.startsWith("VOCABES1:")) d=JSON.parse(decodeURIComponent(escape(atob(v.slice(9))))); }catch(e){}
+    if(!d||typeof d.prog!=="object"){ toast("備份碼格式不正確"); return; }
+    $("rsConfirm").innerHTML=`<div class="fb ok">備份裡有 ${Object.keys(d.prog).length} 個已學的字。還原後會取代目前的進度。</div><div class="btns"><button class="btn warn" id="rsYes">確定還原</button></div>`;
+    $("rsYes").onclick=()=>{ S={ prog:d.prog||{}, stars:d.stars||{}, custom:d.custom||[], settings:Object.assign({goal:20,topic:"all"},d.settings||{}), log:d.log||{}, streak:d.streak||{last:-1,n:0}, pending:d.pending||[] };
+      S.custom.forEach(c=>{ c.custom=true; c.topic="我的單字"; if(!BY.has(c.w.toLowerCase())) BY.set(c.w.toLowerCase(), c); });
+      save(); flush(); toast("進度已還原"); go("home"); }; };
+  $("copy").onclick=async()=>{ const txt=S.custom.map(x=>[x.w,x.zh,x.ex,x.exZh].join(" | ")).join("\n");
+    try{ await navigator.clipboard.writeText(txt); toast("已複製"); } catch(e){ $("bulk").value=txt; toast("無法自動複製，已放到上方文字框"); } };
+}
+
+/* ================= 其他 ================= */
+let tt; function toast(m){ const el=document.getElementById("toast"); el.textContent=m; el.style.display="block"; clearTimeout(tt); tt=setTimeout(()=>el.style.display="none",2400); }
+window.addEventListener("pagehide", ()=>{ lsSave(); });
+/* 過了午夜自動換成新的一天 */
+let shownDay=today();
+function checkDay(){ if(today()!==shownDay){ shownDay=today(); if(state.learn){ /* 學字中不打斷，結束後回到今日就是新的一天 */ } else if(!state.quiz||state.quiz.done){ state.quiz=null; render(); toast("新的一天開始了！"); } } }
+setInterval(checkDay, 30000);
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) checkDay(); });
+window.addEventListener("focus", checkDay);
+if(!ALL.length) app.innerHTML='<div class="empty">單字資料載入失敗，請重新整理頁面。</div>'; else render();
+</script>
+</body>
+</html>
