@@ -268,7 +268,7 @@ function bindPw(after){
 
 /* ================= 發音 ================= */
 let voice=null;
-const APP_VERSION="v3（11/14 語速放慢、可調整）";
+const APP_VERSION="v4（11/17 例句發音：正常＋慢速）";
 const IS_IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
 let voiceMode = (()=>{ try{ return localStorage.getItem("vocab_es_voice_mode")||"auto"; }catch(e){ return "auto"; } })();   // auto | plain | pick
 function pickVoice(){ if(!("speechSynthesis" in window)) return;
@@ -379,7 +379,7 @@ function bindSpeak(root=app){
   root.querySelectorAll("[data-star]").forEach(b=>b.onclick=e=>{e.stopPropagation(); const k=b.dataset.star.toLowerCase(); S.stars[k]?delete S.stars[k]:S.stars[k]=1; save(); b.textContent=S.stars[k]?"★":"☆";});
 }
 function spk(x){ return `<button class="icon" data-say="${esc(x.w)}">🔊</button><button class="icon" data-slow="${esc(x.w)}">🐢</button><button class="icon star" data-star="${esc(x.w)}">${S.stars[x.w.toLowerCase()]?"★":"☆"}</button>`; }
-function exBlock(x){ return x.ex?`<div class="ex"><div class="row"><div class="grow">${esc(x.ex)}</div><button class="icon" data-say="${esc(x.ex)}">🔊</button></div>${x.exZh?`<div class="zh2">${esc(x.exZh)}</div>`:""}</div>`:""; }
+function exBlock(x){ return x.ex?`<div class="ex"><div class="row"><div class="grow">${esc(x.ex)}</div><button class="icon" data-say="${esc(x.ex)}">🔊</button><button class="icon" data-slow="${esc(x.ex)}">🐢</button></div>${x.exZh?`<div class="zh2">${esc(x.exZh)}</div>`:""}</div>`:""; }
 
 /* ================= 今日 ================= */
 function renderHome(){
@@ -522,6 +522,7 @@ function renderQuestion(){
     <div class="q-zh">${esc(x.zh)} <span class="pos">${esc(x.pos)}</span></div>
     ${b?`<div class="q-sent">${b.html}</div>${x.exZh?`<div class="zh2">${esc(x.exZh)}</div>`:""}${b.changed?`<div class="muted" style="margin-top:4px">💬 空格裡是這個字的變化形（動詞變化或複數），請拼出<b>原形</b>（字典上的寫法）。</div>`:""}`:""}
     <div class="btns"><button class="icon" id="say">🔊 聽單字</button><button class="icon" id="slow">🐢 慢速</button><button class="icon" id="hint">💡 提示</button></div>
+    ${x.ex?`<div class="btns"><button class="icon" id="exSay">🔊 聽例句</button><button class="icon" id="exSlow">🐢 例句慢速</button></div>`:""}
     <div id="hintBox" class="muted" style="margin-top:8px"></div>
     <input id="ans" class="answer" style="margin-top:10px" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="輸入拼字">
     <div class="acc">${ACC.map(c=>`<button data-acc="${c}">${c}</button>`).join("")}</div>
@@ -533,6 +534,7 @@ function renderQuestion(){
   app.querySelectorAll("[data-acc]").forEach(b=>{ b.onmousedown=e=>e.preventDefault(); b.onclick=()=>{ const s=ans.selectionStart??ans.value.length, e=ans.selectionEnd??s; ans.value=ans.value.slice(0,s)+b.dataset.acc+ans.value.slice(e); ans.focus(); ans.setSelectionRange(s+1,s+1); }; });
   document.getElementById("say").onclick=()=>speak(x.w);
   document.getElementById("slow").onclick=()=>speak(x.w,true);
+  const exS=document.getElementById("exSay"); if(exS){ exS.onclick=()=>speak(x.ex); document.getElementById("exSlow").onclick=()=>speak(x.ex,true); }
   document.getElementById("hint").onclick=()=>{ q.hints=Math.min(q.hints+1,q.hintOrder.length);
     const open=new Set(q.hintOrder.slice(0,q.hints));
     const shown=x.w.split("").map((ch,i)=>ch===" "?"   ":ch==="-"?"-":(open.has(i)?ch:"_")).join(" ");
@@ -561,6 +563,7 @@ function check(giveUp){
   else{ if(!q.wrong.includes(x)) q.wrong.push(x);
     fb.innerHTML=`<div class="fb no">${giveUp?"答案是：":"❌ 正確拼法："}<div class="diff">${diffHTML(norm(v),x.w)}</div>${v.trim()&&!giveUp?`<div class="muted">你寫的：${esc(v)}</div>`:""}</div>`; }
   speak(x.w);
+  if(x.ex) fb.insertAdjacentHTML("beforeend", `<div class="ex" style="margin-top:8px">${esc(x.ex)}</div>`);
   const btn=document.getElementById("check"); btn.textContent="下一題 →"; btn.onclick=next;
   document.getElementById("skip").style.display="none";
 }
